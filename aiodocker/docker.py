@@ -64,6 +64,7 @@ class Docker:
     def __init__(
         self,
         url: Optional[str] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
         connector: Optional[aiohttp.BaseConnector] = None,
         session: Optional[aiohttp.ClientSession] = None,
         ssl_context: Optional[ssl.SSLContext] = None,
@@ -114,15 +115,15 @@ class Docker:
                         docker_host = _rx_tcp_schemes.sub("https://", docker_host)
                 else:
                     ssl_context = None
-                connector = aiohttp.TCPConnector(ssl=ssl_context)
+                connector = aiohttp.TCPConnector(ssl=ssl_context, loop=loop)
                 self.docker_host = docker_host
             elif docker_host.startswith(UNIX_PRE):
-                connector = aiohttp.UnixConnector(docker_host[UNIX_PRE_LEN:])
+                connector = aiohttp.UnixConnector(docker_host[UNIX_PRE_LEN:], loop=loop)
                 # dummy hostname for URL composition
                 self.docker_host = UNIX_PRE + "localhost"
             elif docker_host.startswith(WIN_PRE):
                 connector = aiohttp.NamedPipeConnector(
-                    docker_host[WIN_PRE_LEN:].replace("/", "\\")
+                    docker_host[WIN_PRE_LEN:].replace("/", "\\"), loop=loop
                 )
                 # dummy hostname for URL composition
                 self.docker_host = WIN_PRE + "localhost"
